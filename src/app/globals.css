@@ -1,0 +1,159 @@
+@import "tailwindcss";
+
+/* ============================================================
+   PoliClash PH — Warm Sunset Design System
+   ============================================================ */
+
+:root {
+  --coral: #ff6b6b;
+  --amber: #ffa94d;
+  --gold: #ffd93d;
+  --rose: #f43f5e;
+  --sun: #fb923c;
+  --magenta: #e85d75;
+  --navy: #1a1033;
+  --plum: #2d1b4e;
+  --warm-dark: #1e1542;
+  --card-glow: rgba(255, 107, 107, 0.15);
+}
+
+@theme inline {
+  --color-coral: var(--coral);
+  --color-amber: var(--amber);
+  --color-gold: var(--gold);
+  --color-rose: var(--rose);
+  --color-sun: var(--sun);
+  --color-magenta: var(--magenta);
+  --color-navy: var(--navy);
+  --color-plum: var(--plum);
+}
+
+body {
+  background: linear-gradient(135deg, #1a1033 0%, #2d1b4e 40%, #1e1542 100%);
+  color: #f5f5f5;
+  font-family: system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+}
+
+/* ---- Utility: gradient text ---- */
+.gradient-text {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ffa94d 50%, #ffd93d 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ---- Utility: gradient button ---- */
+.btn-gradient {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ffa94d 100%);
+  box-shadow: 0 4px 20px rgba(255, 107, 107, 0.3);
+  transition: all 0.2s ease;
+}
+.btn-gradient:hover {
+  box-shadow: 0 6px 30px rgba(255, 107, 107, 0.5);
+  transform: translateY(-1px);
+}
+.btn-gradient:active {
+  transform: translateY(0);
+}
+
+/* ---- Floating orb background ---- */
+.floating-orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ---- Card glass effect ---- */
+.glass-card {
+  background: rgba(45, 27, 78, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 169, 77, 0.15);
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+.glass-card-lg {
+  background: rgba(45, 27, 78, 0.7);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 169, 77, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+/* ---- Game card styling ---- */
+.game-card {
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 140px;
+  min-height: 180px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(45, 27, 78, 0.95) 0%, rgba(30, 21, 66, 0.95) 100%);
+  border: 2px solid;
+  position: relative;
+  overflow: hidden;
+}
+
+.game-card:hover {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 0 12px 40px rgba(255, 107, 107, 0.25);
+}
+
+.game-card-face-down {
+  background: linear-gradient(135deg, #2d1b4e 0%, #1a1033 100%);
+  border-color: rgba(255, 169, 77, 0.3);
+}
+
+.game-card-face-down::after {
+  content: '?';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 3rem;
+  color: rgba(255, 169, 77, 0.2);
+  font-weight: bold;
+}
+
+/* ---- Stat bar ---- */
+.stat-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+.stat-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+/* ---- Shimmer animation ---- */
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+  border-radius: 8px;
+}
+
+/* ---- Pulse glow ---- */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(255, 107, 107, 0.2); }
+  50% { box-shadow: 0 0 20px rgba(255, 107, 107, 0.5); }
+}
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* ---- Scrollbar ---- */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: rgba(26, 16, 51, 0.5); }
+::-webkit-scrollbar-thumb { background: linear-gradient(#ff6b6b, #ffa94d); border-radius: 4px; }
