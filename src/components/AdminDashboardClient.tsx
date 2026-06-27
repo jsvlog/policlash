@@ -30,6 +30,12 @@ export default function AdminDashboardClient() {
   const [addImagePreview, setAddImagePreview] = useState<string>('')
   const [uploading, setUploading] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  // Give cards
+  const [giveCardUserId, setGiveCardUserId] = useState('')
+  const [giveCardCardId, setGiveCardCardId] = useState('')
+  const [users, setUsers] = useState<any[]>([])
+  const [givingCard, setGivingCard] = useState(false)
+  const [giveCardResult, setGiveCardResult] = useState<string>('')
   // Card library sorting/filtering
   const [cardSortBy, setCardSortBy] = useState<'name' | 'rarity' | 'faction' | 'cost'>('rarity')
   const [cardFilterRarity, setCardFilterRarity] = useState<string>('all')
@@ -266,6 +272,39 @@ export default function AdminDashboardClient() {
     setDeleting(false)
   }
 
+  const loadUsers = async () => {
+    try {
+      const res = await fetch('/api/admin/users')
+      if (res.ok) {
+        const data = await res.json()
+        setUsers(data.users || [])
+      }
+    } catch (err) { console.error('Failed to load users:', err) }
+  }
+
+  const giveCardToUser = async () => {
+    if (!giveCardUserId || !giveCardCardId) {
+      alert('Select a user and a card first')
+      return
+    }
+    setGivingCard(true)
+    setGiveCardResult('')
+    try {
+      const res = await fetch('/api/admin/give-card', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: giveCardUserId, card_id: giveCardCardId }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        alert('Failed: ' + (data.error || 'Unknown error'))
+        return
+      }
+      setGiveCardResult(`✓ Gave "${data.card_name}" (${data.rarity}) to user!`)
+    } catch (err: any) { alert('Error: ' + err.message) }
+    setGivingCard(false)
+  }
+
   // Not admin
   if (isAdmin === false) {
     return (
@@ -320,7 +359,7 @@ export default function AdminDashboardClient() {
           💰 Transactions {transactions.length > 0 && `(${transactions.length})`}
         </button>
         <button
-          onClick={() => setTab('cards')}
+          onClick={() => { setTab('cards'); loadUsers() }}
           className={`px-5 py-2.5 rounded-xl text-sm font-medium transition ${
             tab === 'cards'
               ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
@@ -447,6 +486,60 @@ export default function AdminDashboardClient() {
                 {FACTION_ICONS[f]} {f}
               </button>
             ))}
+          </div>
+
+          {/* Give Cards to Users */}
+          <div className="glass-card p-4 mb-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold text-purple-300">🎁 Give Cards to Users</h3>
+              <button onClick={loadUsers} className="text-[10px] px-2 py-1 rounded bg-white/10 text-white/50 hover:text-white/80 transition">
+                🔄 Load Users
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="text-[10px] text-white/40 block mb-1">User</label>
+                <select
+                  value={giveCardUserId}
+                  onChange={(e) => setGiveCardUserId(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/10 text-white text-xs focus:border-purple-500/50 outline-none"
+                >
+                  <option value="" className="bg-[#1a1033]">-- Select user --</option>
+                  {users.map((u: any) => (
+                    <option key={u.id} value={u.id} className="bg-[#1a1033]">
+                      {u.display_name || u.email || u.id.slice(0, 8)} ({u.email || 'no email'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] text-white/40 block mb-1">Card</label>
+                <select
+                  value={giveCardCardId}
+                  onChange={(e) => setGiveCardCardId(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/10 text-white text-xs focus:border-purple-500/50 outline-none"
+                >
+                  <option value="" className="bg-[#1a1033]">-- Select card --</option>
+                  {cards.sort((a: any, b: any) => (a.name || '').localeCompare(b.name || '')).map((card: any) => (
+                    <option key={card.id} value={card.id} className="bg-[#1a1033]">
+                      {card.name} ({card.rarity}) {card.faction && FACTION_ICONS[card.faction as keyof typeof FACTION_ICONS]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-3 items-center">
+              <button
+                onClick={giveCardToUser}
+                disabled={givingCard || !giveCardUserId || !giveCardCardId}
+                className="px-4 py-2 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/40 text-purple-300 text-sm font-bold transition disabled:opacity-30"
+              >
+                {givingCard ? 'Giving...' : '🎁 Give Card'}
+              </button>
+              {giveCardResult && (
+                <span className="text-xs text-green-400 font-medium">{giveCardResult}</span>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
