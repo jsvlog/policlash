@@ -32,9 +32,13 @@ export default function CampaignBattlePage() {
   const [saving, setSaving] = useState(false)
   const [showCardInfo, setShowCardInfo] = useState<number | null>(null)
   const battleLogRef = useRef<HTMLDivElement>(null)
+  const battleRef = useRef<BattleState | null>(null)
 
   const map = getCampaignMap(mapId)
   const monster = generateMonster(mapId, stageId)
+
+  // Keep battleRef in sync
+  useEffect(() => { battleRef.current = battle }, [battle])
 
   // Load user's cards with full card details
   useEffect(() => {
@@ -143,18 +147,20 @@ export default function CampaignBattlePage() {
 
   // Handle player action
   const doAction = useCallback((type: 'attack' | 'ability', cardIndex: number) => {
-    if (!battle || animating || battle.turn !== 'player' || battle.status !== 'fighting') return
-    if (battle.cards[cardIndex].defeated || battle.cards[cardIndex].stunned) return
+    const current = battleRef.current
+    if (!current || animating || current.turn !== 'player' || current.status !== 'fighting') return
+    if (current.cards[cardIndex].defeated || current.cards[cardIndex].stunned) return
 
     setAnimating(true)
 
     // Small delay for animation feel
     setTimeout(() => {
+      const state = battleRef.current!
       let newState: BattleState
       if (type === 'attack') {
-        newState = playerAttack(battle, cardIndex)
+        newState = playerAttack(state, cardIndex)
       } else {
-        newState = playerAbility(battle, cardIndex)
+        newState = playerAbility(state, cardIndex)
       }
 
       // Trigger attack animation
@@ -184,11 +190,11 @@ export default function CampaignBattlePage() {
         }, 500)
       }, 600)
     }, 100)
-  }, [battle, animating])
+  }, [animating])
 
   // Save progress + card XP on victory
   const saveProgress = async () => {
-    if (!userId || !battle) return
+    if (!userId || !battle || battle.status !== 'victory') return
     setSaving(true)
     try {
       // Save campaign progress
