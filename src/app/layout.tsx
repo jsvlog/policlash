@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
+      <body className="overflow-x-hidden">
         <div className="floating-orb" style={{ width: '400px', height: '400px', background: '#ff6b6b', top: '-100px', left: '-100px' }} />
         <div className="floating-orb" style={{ width: '350px', height: '350px', background: '#ffa94d', bottom: '-80px', right: '-80px' }} />
         <div className="relative z-10 min-h-screen flex flex-col">

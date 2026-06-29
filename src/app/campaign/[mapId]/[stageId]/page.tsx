@@ -373,13 +373,91 @@ export default function CampaignBattlePage() {
         </div>
 
         {/* ARENA */}
-        <div className="flex-1 flex flex-col lg:flex-row items-center justify-center gap-6 px-4 py-6 relative overflow-hidden">
+        <div className="flex-1 flex flex-col items-center justify-center gap-3 sm:gap-5 px-2 sm:px-4 py-3 relative overflow-hidden">
           {/* Arena floor */}
           <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-amber-900/10 to-transparent pointer-events-none" />
           <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
 
-          {/* LEFT SIDE — Player Cards (trading card style) */}
-          <div className="flex gap-3 z-10">
+          {/* MONSTER — top on mobile */}
+          <div className={`z-10 w-full max-w-xs sm:max-w-sm transition-all duration-300 ${
+            attackAnim?.target === 'monster' ? 'animate-shake scale-95' : ''
+          }`}>
+            <div className="glass-card-lg p-5 sm:p-8 text-center relative overflow-hidden">
+              {/* Monster aura */}
+              <div className="absolute inset-0 opacity-20"
+                style={{
+                  background: monster.special
+                    ? 'radial-gradient(circle at 50% 30%, #ef4444, transparent 60%)'
+                    : 'radial-gradient(circle at 50% 30%, #f59e0b, transparent 60%)',
+                }}
+              />
+
+              <div className={`text-6xl sm:text-8xl mb-3 sm:mb-4 transition-all duration-300 relative z-10 ${
+                attackAnim?.target === 'monster' ? 'scale-110' : ''
+              }`}>
+                {attackAnim?.target === 'monster' ? '💥' : monster.emoji}
+              </div>
+
+              <h2 className="text-xl sm:text-2xl font-bold text-white mb-1 relative z-10">
+                {monster.name}
+              </h2>
+              {monster.special && (
+                <span className="text-xs bg-red-500/20 text-red-400 px-2 py-1 rounded-full relative z-10">
+                  BOSS
+                </span>
+              )}
+              <p className="text-xs text-white/30 mt-1 relative z-10">{monster.title}</p>
+
+              {/* HP bar */}
+              <div className="mt-3 sm:mt-4 relative z-10">
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-red-400 font-medium">HP</span>
+                  <span className="text-white/60 font-mono">{battle.monster.hp} / {battle.monster.maxHp}</span>
+                </div>
+                <div className="h-3 sm:h-4 bg-white/10 rounded-full overflow-hidden border border-white/5">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${(battle.monster.hp / battle.monster.maxHp) * 100}%`,
+                      background: 'linear-gradient(90deg, #ef4444, #f59e0b, #ef4444)',
+                      backgroundSize: '200% 100%',
+                      animation: 'hpPulse 2s ease-in-out infinite',
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Stats row */}
+              <div className="flex justify-center gap-4 sm:gap-6 mt-3 sm:mt-4 text-sm text-white/50 relative z-10">
+                <div className="flex items-center gap-1">
+                  <span className="text-orange-400">⚔️</span>
+                  <span className="font-mono">{monster.attack}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-blue-400">🛡️</span>
+                  <span className="font-mono">{monster.defense}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-purple-400">📊</span>
+                  <span className="font-mono">Lv.{monster.level}</span>
+                </div>
+              </div>
+
+              {/* Boss special indicator */}
+              {monster.special && (
+                <div className={`mt-2 sm:mt-3 text-xs relative z-10 ${
+                  battle.monster.specialCooldown <= 0 ? 'text-red-400' : 'text-white/20'
+                }`}>
+                  {battle.monster.specialCooldown <= 0
+                    ? `⚡ ${monster.special.name} READY`
+                    : `⏳ ${monster.special.name} (${battle.monster.specialCooldown}t)`}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* PLAYER CARDS — bottom on mobile */}
+          <div className="flex gap-2 sm:gap-3 z-10 flex-wrap justify-center">
             {battle.cards.map((bc, i) => {
               const isAttacking = attackAnim?.target === 'monster' && attackAnim?.cardIndex === i
               const isHit = attackAnim?.target === 'card' && attackAnim?.cardIndex === i
@@ -389,8 +467,8 @@ export default function CampaignBattlePage() {
               return (
                 <div
                   key={i}
-                  className={`relative transition-all duration-700 w-40 flex-shrink-0 ${
-                    isAttacking ? 'translate-x-[calc(40vw)] scale-110 z-20' : 'translate-x-0'
+                  className={`relative transition-all duration-700 w-24 sm:w-32 md:w-40 flex-shrink-0 ${
+                    isAttacking ? 'scale-110 z-20' : ''
                   } ${isHit ? 'animate-shake' : ''}`}
                 >
                   {/* Card */}
@@ -416,22 +494,22 @@ export default function CampaignBattlePage() {
                       {bc.card.art_url ? (
                         <img src={bc.card.art_url} alt={bc.card.name} className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-6xl opacity-20">
+                        <div className="w-full h-full flex items-center justify-center text-4xl sm:text-6xl opacity-20">
                           {FACTION_ICONS[bc.card.faction as keyof typeof FACTION_ICONS] || '🃏'}
                         </div>
                       )}
 
                       {/* Status overlay */}
                       {bc.defeated && (
-                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-4xl">💀</div>
+                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-3xl sm:text-4xl">💀</div>
                       )}
                       {bc.stunned && (
-                        <div className="absolute inset-0 bg-orange-500/20 flex items-center justify-center text-3xl">😵</div>
+                        <div className="absolute inset-0 bg-orange-500/20 flex items-center justify-center text-2xl sm:text-3xl">😵</div>
                       )}
 
                       {/* HP bar — thin at top */}
                       {!bc.defeated && (
-                        <div className="absolute top-0 left-0 right-0 h-1.5 bg-black/50">
+                        <div className="absolute top-0 left-0 right-0 h-1 sm:h-1.5 bg-black/50">
                           <div
                             className="h-full transition-all duration-500"
                             style={{
@@ -443,20 +521,20 @@ export default function CampaignBattlePage() {
                       )}
 
                       {/* Level badge */}
-                      <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md bg-black/60 text-[10px] font-bold text-amber-400">
+                      <div className="absolute top-1.5 sm:top-2 right-1.5 sm:right-2 px-1 py-0.5 rounded-md bg-black/60 text-[8px] sm:text-[10px] font-bold text-amber-400">
                         Lv.{bc.level}
                       </div>
 
                       {/* Name + stats at bottom */}
-                      <div className="absolute bottom-0 left-0 right-0 px-2 pb-1.5 pt-8 bg-gradient-to-t from-black/85 to-transparent">
-                        <div className="text-[11px] font-bold text-white truncate leading-tight">
+                      <div className="absolute bottom-0 left-0 right-0 px-1.5 sm:px-2 pb-1 sm:pb-1.5 pt-6 sm:pt-8 bg-gradient-to-t from-black/85 to-transparent">
+                        <div className="text-[9px] sm:text-[11px] font-bold text-white truncate leading-tight">
                           {bc.card.name}
                         </div>
                         <div className="flex items-center justify-between mt-0.5">
-                          <span className="text-[9px] text-white/50">
-                            {bc.hp}/{bc.maxHp} HP
+                          <span className="text-[7px] sm:text-[9px] text-white/50">
+                            {bc.hp}/{bc.maxHp}
                           </span>
-                          <span className="text-[9px] text-white/30">
+                          <span className="text-[7px] sm:text-[9px] text-white/30">
                             ⚔{bc.attack + bc.debuffAttack}
                           </span>
                         </div>
@@ -471,7 +549,7 @@ export default function CampaignBattlePage() {
                           if (battle.turn === 'player' && !animating) doAction('ability', i)
                         }}
                         disabled={animating || bc.abilityCooldown > 0}
-                        className={`w-full mt-1 px-2 py-1 rounded-lg text-[10px] font-medium transition ${
+                        className={`w-full mt-0.5 sm:mt-1 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg text-[8px] sm:text-[10px] font-medium transition ${
                           bc.abilityCooldown > 0
                             ? 'bg-white/5 text-white/15'
                             : 'bg-amber-500/15 text-amber-400 hover:bg-amber-500/25'
@@ -486,91 +564,6 @@ export default function CampaignBattlePage() {
                 </div>
               )
             })}
-          </div>
-
-          {/* CENTER — Battle effects */}
-          <div className="hidden lg:flex items-center justify-center z-10 w-20 flex-shrink-0">
-            {animating && attackAnim?.target === 'monster' && (
-              <div className="text-4xl animate-ping">⚔️</div>
-            )}
-          </div>
-
-          {/* RIGHT SIDE — Monster */}
-          <div className={`z-10 w-full max-w-sm transition-all duration-300 ${
-            attackAnim?.target === 'monster' ? 'animate-shake scale-95' : ''
-          }`}>
-            <div className="glass-card-lg p-8 text-center relative overflow-hidden">
-              {/* Monster aura */}
-              <div className="absolute inset-0 opacity-20"
-                style={{
-                  background: monster.special
-                    ? 'radial-gradient(circle at 50% 30%, #ef4444, transparent 60%)'
-                    : 'radial-gradient(circle at 50% 30%, #f59e0b, transparent 60%)',
-                }}
-              />
-
-              <div className={`text-8xl mb-4 transition-all duration-300 relative z-10 ${
-                attackAnim?.target === 'monster' ? 'scale-110' : ''
-              }`}>
-                {attackAnim?.target === 'monster' ? '💥' : monster.emoji}
-              </div>
-
-              <h2 className="text-2xl font-bold text-white mb-1 relative z-10">
-                {monster.name}
-              </h2>
-              {monster.special && (
-                <span className="text-xs bg-red-500/20 text-red-400 px-2 py-1 rounded-full relative z-10">
-                  BOSS
-                </span>
-              )}
-              <p className="text-xs text-white/30 mt-1 relative z-10">{monster.title}</p>
-
-              {/* HP bar */}
-              <div className="mt-4 relative z-10">
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-red-400 font-medium">HP</span>
-                  <span className="text-white/60 font-mono">{battle.monster.hp} / {battle.monster.maxHp}</span>
-                </div>
-                <div className="h-4 bg-white/10 rounded-full overflow-hidden border border-white/5">
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{
-                      width: `${(battle.monster.hp / battle.monster.maxHp) * 100}%`,
-                      background: 'linear-gradient(90deg, #ef4444, #f59e0b, #ef4444)',
-                      backgroundSize: '200% 100%',
-                      animation: 'hpPulse 2s ease-in-out infinite',
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Stats row */}
-              <div className="flex justify-center gap-6 mt-4 text-sm text-white/50 relative z-10">
-                <div className="flex items-center gap-1">
-                  <span className="text-orange-400">⚔️</span>
-                  <span className="font-mono">{monster.attack}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="text-blue-400">🛡️</span>
-                  <span className="font-mono">{monster.defense}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="text-purple-400">📊</span>
-                  <span className="font-mono">Lv.{monster.level}</span>
-                </div>
-              </div>
-
-              {/* Boss special indicator */}
-              {monster.special && (
-                <div className={`mt-3 text-xs relative z-10 ${
-                  battle.monster.specialCooldown <= 0 ? 'text-red-400' : 'text-white/20'
-                }`}>
-                  {battle.monster.specialCooldown <= 0
-                    ? `⚡ ${monster.special.name} READY`
-                    : `⏳ ${monster.special.name} (${battle.monster.specialCooldown}t)`}
-                </div>
-              )}
-            </div>
           </div>
         </div>
 
