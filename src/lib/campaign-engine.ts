@@ -9,14 +9,20 @@
 import type { GameCard, CardRarity } from './types'
 import type { CampaignMonster } from './campaign-data'
 
-// ---- Rarity level multipliers (per level) ----
+// ---- Rarity level multipliers (per level, capped at 50) ----
+// Levels 1-50: rarity-specific growth. Levels 51-100: flat +1% for all.
+// This prevents mythic cards from being 4x stronger than commons at endgame.
 export const RARITY_LEVEL_MULT: Record<CardRarity, number> = {
-  common: 0.015,     // +1.5% per level → +148% at lv100
-  rare: 0.022,       // +2.2% per level → +218% at lv100
-  epic: 0.030,       // +3.0% per level → +297% at lv100
-  legendary: 0.040,  // +4.0% per level → +396% at lv100
-  mythic: 0.055,     // +5.5% per level → +544% at lv100
+  common: 0.015,     // +1.5%/level (lv1-50) → total +74.5% at lv50
+  rare: 0.022,       // +2.2%/level → total +107.8% at lv50
+  epic: 0.030,       // +3.0%/level → total +147% at lv50
+  legendary: 0.040,  // +4.0%/level → total +196% at lv50
+  mythic: 0.055,     // +5.5%/level → total +269.5% at lv50
 }
+
+// Post-level-50: all cards get +1% per level (0.01)
+const POST_CAP_MULT = 0.01
+const LEVEL_CAP = 50
 
 // ---- XP needed to reach a given level ----
 export function xpForLevel(level: number): number {
@@ -106,10 +112,14 @@ export interface BattleState {
   xpAwarded: boolean
 }
 
-// ---- Convert a GameCard to a BattleCard (with level scaling) ----
+// ---- Convert a GameCard to a BattleCard (with level scaling, capped at 50) ----
 export function cardToBattleCard(card: GameCard, level = 1): BattleCard {
   const mult = RARITY_LEVEL_MULT[card.rarity] || 0.015
-  const levelMult = 1 + (level - 1) * mult
+  
+  // Capped scaling: rarity mult applies up to level 50, then flat +1%/level
+  const cappedLevels = Math.min(level - 1, LEVEL_CAP - 1)
+  const postCapLevels = Math.max(0, level - LEVEL_CAP)
+  const levelMult = 1 + cappedLevels * mult + postCapLevels * POST_CAP_MULT
 
   const baseHp = Math.floor(
     (card.stats.charisma + card.stats.machinery + card.stats.budget + card.stats.influence) / 1.5
@@ -502,22 +512,64 @@ export function monsterTurn(state: BattleState): BattleState {
   }
 
   return {
-    ...state,
-    cards: newCards,
-    monster: {
-      ...state.monster,
-      specialCooldown: newSpecialCooldown,
-    },
-    turn: 'player',
-    status: allDefeated ? 'defeat' : 'fighting',
-    battleLog: [...state.battleLog, events[0]?.message || ''],
-    events,
-    turnNumber: state.turnNumber + 1,
-    selectedCardIndex: null,
+    ...processPassives({
+      ...state,
+      cards: newCards,
+      monster: {
+        ...state.monster,
+        specialCooldown: newSpecialCooldown,
+      },
+      turn: 'player',
+      status: allDefeated ? 'defeat' : 'fighting',
+      battleLog: [...state.battleLog, events[0]?.message || ''],
+      events,
+      turnNumber: state.turnNumber + 1,
+      selectedCardIndex: null,
+    }),
   }
 }
 
 // ---- Clean events between turns ----
 export function clearEvents(state: BattleState): BattleState {
   return { ...state, events: [] }
+}
+
+// ---- Process passive abilities at start of player turn ----
+export function processPassives(state: BattleState): BattleState {
+  if (state.turn !== 'player' || state.status !== 'fighting') return state
+  
+  let newCards = [...state.cards]
+  let events: BattleEvent[] = []
+  let healed = false
+
+  for (let i = 0; i < newCards.length; i++) {
+    const card = newCards[i]
+    if (card.defeated || !card.card.ability) continue
+    
+    const ability = card.card.ability
+    
+    // LGU Fund: passive heal — mayors allocate budget to keep the team alive
+    if (ability.type === 'lgu_fund') {
+      const healAmount = ability.power || 2
+      if (card.hp < card.maxHp) {
+        newCards[i] = { ...card, hp: Math.min(card.maxHp, card.hp + healAmount) }
+        healed = true
+      }
+    }
+  }
+
+  if (healed) {
+    events.push({
+      type: 'heal', source: 'player',
+      message: 'LGU Fund: Mayors allocate budget — team healed!',
+      targetHp: state.monster.hp, targetMaxHp: state.monster.maxHp,
+    })
+  }
+
+  return {
+    ...state,
+    cards: newCards,
+    events: [...state.events, ...events],
+    battleLog: events.length > 0 ? [...state.battleLog, events[0].message] : state.battleLog,
+  }
 }

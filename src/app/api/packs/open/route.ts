@@ -121,21 +121,68 @@ export async function POST(request: Request) {
     result[0] = guaranteedCard
   }
 
-  // 8. Insert cards into user_cards
-  const inserts = result.map((card) => ({
-    user_id: user.id,
-    card_id: card.id,
-    card_name: card.name,
-    pack_id: userPack.pack_id,
-    obtained_at: new Date().toISOString(),
-  }))
+  // 8. Duplicate handling: check ownership, convert dupes to XP
+  // XP bonus for duplicate pulls (rarity-based)
+  const DUPE_XP: Record<string, number> = {
+    common: 25,
+    rare: 50,
+    epic: 100,
+    legendary: 200,
+    mythic: 350,
+  }
 
-  const { error: insertErr } = await admin
+  // Fetch existing user cards for duplicate check
+  const { data: existingCards } = await admin
     .from('user_cards')
-    .insert(inserts)
+    .select('id, card_id, xp, level')
+    .eq('user_id', user.id)
 
-  if (insertErr) {
-    return NextResponse.json({ error: 'Failed to save cards: ' + insertErr.message }, { status: 500 })
+  const ownedCardIds = new Set((existingCards || []).map((c: any) => c.card_id))
+  const ownedMap = new Map((existingCards || []).map((c: any) => [c.card_id, c]))
+
+  const newCards: any[] = []
+  const duplicateCards: any[] = []
+
+  for (const card of result) {
+    if (ownedCardIds.has(card.id)) {
+      // Duplicate — grant bonus XP
+      const existing = ownedMap.get(card.id)
+      const bonusXp = DUPE_XP[card.rarity] || 25
+      const newTotalXp = (existing.xp || 0) + bonusXp
+
+      await admin
+        .from('user_cards')
+        .update({ xp: newTotalXp })
+        .eq('id', existing.id)
+
+      duplicateCards.push({
+        name: card.name,
+        rarity: card.rarity,
+        xpGained: bonusXp,
+      })
+    } else {
+      // New card — insert
+      newCards.push(card)
+    }
+  }
+
+  // Insert only new (non-duplicate) cards
+  if (newCards.length > 0) {
+    const inserts = newCards.map((card) => ({
+      user_id: user.id,
+      card_id: card.id,
+      card_name: card.name,
+      pack_id: userPack.pack_id,
+      obtained_at: new Date().toISOString(),
+    }))
+
+    const { error: insertErr } = await admin
+      .from('user_cards')
+      .insert(inserts)
+
+    if (insertErr) {
+      return NextResponse.json({ error: 'Failed to save cards: ' + insertErr.message }, { status: 500 })
+    }
   }
 
   // 9. Mark pack as opened
@@ -145,14 +192,13 @@ export async function POST(request: Request) {
     .eq('id', userPackId)
 
   if (updateErr) {
-    // Cards were saved but pack status update failed — log it
     console.error('Failed to mark pack as opened:', updateErr.message)
   }
 
-  // 10. Return the opened cards
+  // 10. Return the opened cards + duplicate info
   return NextResponse.json({
     success: true,
-    cards: result.map((c) => ({
+    cards: newCards.map((c) => ({
       id: c.id,
       name: c.name,
       title: c.title,
@@ -165,5 +211,6 @@ export async function POST(request: Request) {
       cost: c.cost,
       pack_source: c.pack_source,
     })),
+    duplicates: duplicateCards,
   })
 }

@@ -5,9 +5,11 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { fetchPendingTransactions, approveTransaction, rejectTransaction, checkIsAdmin } from '@/lib/shop-service'
 import { RARITY_COLORS, FACTION_COLORS, FACTION_ICONS } from '@/lib/card-data'
+import MetaTab from '@/components/MetaTab'
+import EconomyTab from '@/components/EconomyTab'
 import type { CardRarity, CardFaction } from '@/lib/types'
 
-type Tab = 'transactions' | 'cards'
+type Tab = 'transactions' | 'cards' | 'meta' | 'economy'
 
 const RARITY_OPTIONS: CardRarity[] = ['common', 'rare', 'epic', 'mythic', 'legendary']
 const FACTION_OPTIONS: CardFaction[] = ['trapo', 'reformer', 'showbiz', 'dynasty', 'activist', 'warlord']

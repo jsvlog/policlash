@@ -229,11 +229,11 @@ export const SHOP_PACKS: ShopPack[] = [
   {
     id: 'standard-pack',
     name: 'Standard Pack',
-    description: 'Your go-to pack. 3 cards, guaranteed Rare or higher. ~5% mythic chance per card.',
+    description: 'Your go-to pack. 3 cards, guaranteed Rare or higher. ~7% mythic chance per card — best value!',
     price: 50,
     card_count: 3,
     guaranteed_rarity: 'rare',
-    rarity_weights: { common: 30, rare: 25, epic: 20, legendary: 10, mythic: 5 },
+    rarity_weights: { common: 28, rare: 25, epic: 20, legendary: 10, mythic: 7 },
     art_url: '',
     featured_cards: ['Prezidensiable Showbiz', 'Probinsiyano Strongman'],
   },

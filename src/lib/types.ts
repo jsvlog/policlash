@@ -26,7 +26,8 @@ export type AbilityType =
   | 'legacy'           // When destroyed, buff adjacent allies
   | 'pardon'           // Revive a destroyed ally
   | 'investigate'      // Reveal enemy card stats
-  | 'pork_barrel';     // Generate extra budget
+  | 'pork_barrel'      // Generate extra budget (on_play)
+  | 'lgu_fund';        // Passive: +1 budget at start of turn (mayors)
 
 // ---- Ability Definition ----
 export interface CardAbility {
