@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import type { GameCard, CardRarity } from '@/lib/types'
 
-const RARITY_ORDER: CardRarity[] = ['common', 'rare', 'epic', 'mythic', 'legendary']
+const RARITY_ORDER: CardRarity[] = ['common', 'rare', 'epic', 'legendary', 'mythic']
 
 function rollRarity(weights: Record<string, number>): CardRarity {
   const total = Object.values(weights).reduce((a, b) => a + b, 0)
