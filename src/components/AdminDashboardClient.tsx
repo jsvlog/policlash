@@ -7,9 +7,10 @@ import { fetchPendingTransactions, approveTransaction, rejectTransaction, checkI
 import { RARITY_COLORS, FACTION_COLORS, FACTION_ICONS } from '@/lib/card-data'
 import MetaTab from '@/components/MetaTab'
 import EconomyTab from '@/components/EconomyTab'
+import BattleAnalyticsTab from '@/components/BattleAnalyticsTab'
 import type { CardRarity, CardFaction } from '@/lib/types'
 
-type Tab = 'transactions' | 'cards' | 'meta' | 'economy'
+type Tab = 'transactions' | 'cards' | 'meta' | 'economy' | 'battles'
 
 const RARITY_OPTIONS: CardRarity[] = ['common', 'rare', 'epic', 'mythic', 'legendary']
 const FACTION_OPTIONS: CardFaction[] = ['trapo', 'reformer', 'showbiz', 'dynasty', 'activist', 'warlord']
@@ -390,6 +391,16 @@ export default function AdminDashboardClient() {
         >
           📊 Economy
         </button>
+        <button
+          onClick={() => setTab('battles')}
+          className={`px-5 py-2.5 rounded-xl text-sm font-medium transition ${
+            tab === 'battles'
+              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+              : 'bg-white/5 text-white/50 hover:bg-white/10 border border-white/5'
+          }`}
+        >
+          ⚔️ Battles
+        </button>
       </div>
 
       {/* TRANSACTIONS TAB */}
@@ -649,6 +660,14 @@ export default function AdminDashboardClient() {
       {/* ECONOMY TAB */}
       {tab === 'economy' && (
         <EconomyTab />
+      )}
+
+      {/* BATTLE ANALYTICS TAB */}
+      {tab === 'battles' && (
+        <div className="glass-card-lg p-6">
+          <h2 className="text-xl font-bold text-amber-300 mb-4">⚔️ Battle Analytics</h2>
+          <BattleAnalyticsTab />
+        </div>
       )}
 
       {/* EDIT CARD MODAL */}

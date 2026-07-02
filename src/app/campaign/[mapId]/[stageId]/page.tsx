@@ -49,6 +49,22 @@ export default function CampaignBattlePage() {
       .catch(() => {})
   }, [])
 
+  // Log battle result for analytics (silent - won't block gameplay)
+  const logBattle = (result: 'victory' | 'defeat', turns: number, cards: any[]) => {
+    if (!userId) return
+    fetch('/api/battle/log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mapId, stageId, result, turns,
+        cardsUsed: cards.map((c: any) => c.name || c.card_name || 'Unknown'),
+        cardIds: cards.map((c: any) => c.card_id || c.id),
+        monsterName: monster.name,
+        monsterLevel: monster.level,
+      }),
+    }).catch(() => {})
+  }
+
   // Load user's cards with full card details
   useEffect(() => {
     const supabase = createClient()
@@ -262,8 +278,14 @@ export default function CampaignBattlePage() {
     if (screen === 'victory') saveProgress()
   }, [screen])
 
-  // Watch for battle end
+  // Watch for battle end + log analytics
   useEffect(() => {
+    if (battle && (battle.status === 'victory' || battle.status === 'defeat')) {
+      // Log battle to analytics
+      if (!battle.xpAwarded) {
+        logBattle(battle.status, battle.turnNumber, selectedCards)
+      }
+    }
     if (battle && battle.status === 'victory') {
       const withXp = awardXp(battle)
       setBattle(withXp)
