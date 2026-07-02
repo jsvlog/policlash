@@ -32,12 +32,22 @@ create policy "profiles_insert_own"  on public.profiles for insert with check (a
 create policy "profiles_update_own"  on public.profiles for update using (auth.uid() = id);
 create policy "profiles_admin_all"   on public.profiles for all using (public.is_admin());
 
--- auto-create profile on signup
+-- auto-create profile on signup + give free Budget Pack
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer as $$
+declare
+  budget_pack_id text;
 begin
   insert into public.profiles (id, display_name)
   values (new.id, coalesce(new.raw_user_meta_data->>'display_name', ''));
+
+  -- Give free Budget Pack to new users
+  select id into budget_pack_id from public.shop_packs where name = 'Budget Pack' limit 1;
+  if budget_pack_id is not null then
+    insert into public.user_packs (user_id, pack_id, pack_name, status, obtained_at)
+    values (new.id, budget_pack_id, 'Budget Pack', 'unopened', now());
+  end if;
+
   return new;
 end;
 $$;
