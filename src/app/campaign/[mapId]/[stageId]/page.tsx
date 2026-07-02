@@ -31,6 +31,7 @@ export default function CampaignBattlePage() {
   const [userId, setUserId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [showCardInfo, setShowCardInfo] = useState<number | null>(null)
+  const [metaState, setMetaState] = useState<any>(null)
   const battleLogRef = useRef<HTMLDivElement>(null)
   const battleRef = useRef<BattleState | null>(null)
 
@@ -39,6 +40,14 @@ export default function CampaignBattlePage() {
 
   // Keep battleRef in sync
   useEffect(() => { battleRef.current = battle }, [battle])
+
+  // Fetch active meta buffs for card stat modifications
+  useEffect(() => {
+    fetch('/api/admin/meta')
+      .then(r => r.json())
+      .then(d => { if (d.success) setMetaState(d.meta) })
+      .catch(() => {})
+  }, [])
 
   // Load user's cards with full card details
   useEffect(() => {
@@ -119,6 +128,23 @@ export default function CampaignBattlePage() {
     })
   }
 
+  // Apply active meta buffs to card stats
+  const applyBuffs = (cardId: string, baseStats: any) => {
+    if (!metaState?.activeBuffs) return baseStats
+    const buffs = metaState.activeBuffs.filter((b: any) => b.cardId === cardId)
+    if (buffs.length === 0) return baseStats
+    let modified = { ...baseStats }
+    for (const buff of buffs) {
+      const mult = buff.type === 'debuff' ? -1 : 1
+      for (const key of ['charisma', 'machinery', 'budget', 'influence']) {
+        if (buff.statModifier?.[key]) {
+          modified[key] = Math.max(0, Math.floor(modified[key] * (1 + mult * buff.statModifier[key] / 100)))
+        }
+      }
+    }
+    return modified
+  }
+
   // Start battle
   const handleStartBattle = () => {
     if (selectedCards.length === 0) return
@@ -130,7 +156,7 @@ export default function CampaignBattlePage() {
         title: uc.title || '',
         faction: uc.faction || 'trapo',
         rarity: uc.rarity || 'common',
-        stats: uc.stats || { charisma: 5, machinery: 5, budget: 5, influence: 5 },
+        stats: applyBuffs(uc.card_id || uc.id, uc.stats || { charisma: 5, machinery: 5, budget: 5, influence: 5 }),
         ability: uc.ability || null,
         cost: uc.cost || 3,
         pack_source: 'starter',

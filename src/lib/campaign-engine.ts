@@ -156,7 +156,7 @@ export function startBattle(
   const battleCards = selectedCards.map(({ card, level }) => cardToBattleCard(card, level))
   const playerFirst = monster.level < 30 || Math.random() > 0.3
 
-  return {
+  const state: BattleState = {
     cards: battleCards,
     monster: {
       monster,
@@ -174,6 +174,9 @@ export function startBattle(
     selectedCardIndex: null,
     xpAwarded: false,
   }
+
+  // Process passives on turn 1 if player goes first
+  return playerFirst ? processPassives(state) : state
 }
 
 // ---- Award XP to all surviving cards on victory ----

@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { fetchUserPacks, fetchUserCards, fetchMyTransactions } from '@/lib/shop-service'
 import { RARITY_COLORS, FACTION_COLORS, FACTION_ICONS } from '@/lib/card-data'
 import { xpToNextLevel, xpForLevel, RARITY_LEVEL_MULT } from '@/lib/campaign-engine'
+import CraftingPanel from '@/components/CraftingPanel'
 import type { CardRarity } from '@/lib/types'
 
 const RARITY_LABELS: Record<string, string> = {
@@ -29,6 +30,7 @@ export default function DashboardClient() {
   const [packNameMap, setPackNameMap] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [openingResult, setOpeningResult] = useState<any[] | null>(null)
+  const [duplicateResults, setDuplicateResults] = useState<any[] | null>(null)
   const [opening, setOpening] = useState(false)
   const [selectedCard, setSelectedCard] = useState<any | null>(null)
   const router = useRouter()
@@ -106,6 +108,7 @@ export default function DashboardClient() {
       const data = await res.json()
       if (!res.ok) { alert(data.error || 'Failed to open pack'); return }
       setOpeningResult(data.cards)
+      if (data.duplicates?.length > 0) setDuplicateResults(data.duplicates)
       if (user) await loadData(user.id)
     } catch (err: any) {
       alert('Error opening pack: ' + (err.message || 'Unknown error'))
@@ -290,6 +293,9 @@ export default function DashboardClient() {
         )}
       </div>
 
+      {/* Card Crafting */}
+      {user && <CraftingPanel userId={user.id} onRefresh={() => loadData(user.id)} />}
+
       {/* Quick Links */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Link href="/campaign" className="glass-card p-6 text-center hover:scale-[1.02] transition">
@@ -333,8 +339,19 @@ export default function DashboardClient() {
                 </div>
               ))}
             </div>
+            {duplicateResults && duplicateResults.length > 0 && (
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 mb-4">
+                <div className="text-sm font-bold text-amber-300 mb-2">🔄 Duplicate Bonus XP</div>
+                {duplicateResults.map((dup: any, i: number) => (
+                  <div key={i} className="flex justify-between text-sm text-white/70">
+                    <span>{dup.name}</span>
+                    <span className="text-amber-400">+{dup.xpGained} XP</span>
+                  </div>
+                ))}
+              </div>
+            )}
             <button
-              onClick={() => setOpeningResult(null)}
+              onClick={() => { setOpeningResult(null); setDuplicateResults(null) }}
               className="w-full px-6 py-3 rounded-xl btn-gradient text-white font-bold"
             >
               Close

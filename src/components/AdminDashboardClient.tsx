@@ -370,6 +370,26 @@ export default function AdminDashboardClient() {
         >
           🎴 Card Library ({cards.length})
         </button>
+        <button
+          onClick={() => setTab('meta')}
+          className={`px-5 py-2.5 rounded-xl text-sm font-medium transition ${
+            tab === 'meta'
+              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+              : 'bg-white/5 text-white/50 hover:bg-white/10 border border-white/5'
+          }`}
+        >
+          🎮 Meta
+        </button>
+        <button
+          onClick={() => setTab('economy')}
+          className={`px-5 py-2.5 rounded-xl text-sm font-medium transition ${
+            tab === 'economy'
+              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+              : 'bg-white/5 text-white/50 hover:bg-white/10 border border-white/5'
+          }`}
+        >
+          📊 Economy
+        </button>
       </div>
 
       {/* TRANSACTIONS TAB */}
@@ -619,6 +639,16 @@ export default function AdminDashboardClient() {
             })}
           </div>
         </div>
+      )}
+
+      {/* META TAB */}
+      {tab === 'meta' && (
+        <MetaTab cards={cards} loadCards={loadCards} />
+      )}
+
+      {/* ECONOMY TAB */}
+      {tab === 'economy' && (
+        <EconomyTab />
       )}
 
       {/* EDIT CARD MODAL */}
